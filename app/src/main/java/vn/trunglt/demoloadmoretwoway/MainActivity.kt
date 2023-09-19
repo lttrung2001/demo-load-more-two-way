@@ -25,6 +25,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
     private var page = 1
+    // Bien nay tuong trung cho dialog loading
     private var isLoading = false
 
     private val mainHandler by lazy {
@@ -41,23 +42,35 @@ class MainActivity : AppCompatActivity() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
                 val llm = binding.rvCountry.layoutManager as LinearLayoutManager
-                val visibleItemsCount = llm.childCount
                 val totalItems = llm.itemCount
-                val first = llm.findFirstVisibleItemPosition()
-                val last = llm.findLastVisibleItemPosition()
-                if (!isLoading) {
-                    if (dy > 0) {
-                        if (totalItems - first > PAGE_LIMIT) {
+                val childCount = llm.childCount
+                val first = llm.findFirstCompletelyVisibleItemPosition()
+                val last = llm.findLastCompletelyVisibleItemPosition()
+                if (!countryAdapter.isLoading && !isLoading) {
+                    countryAdapter.isLoading = true
+                    if (
+                        // dy > 0 scroll xuong
+                        dy > 0 &&
+                        // check co can load san trang sau khong
+                        last + childCount > totalItems) {
+                        // neu index cua trang hien tai > 1 thi cache n item dau tien mList
+                        if (first / PAGE_LIMIT > 1) {
                             countryAdapter.doCacheFirst()
                         }
                         countryAdapter.insertBelow()
-                    } else if (dy < 0) {
-                        if (totalItems - last > PAGE_LIMIT) {
+                    } else if (
+                        // dy < 0 scroll len
+                        dy < 0 &&
+                        // check co can load san trang truoc khong
+                        first - childCount < 0) {
+                        // neu delta cua trang hien tai voi tong so trang > 1 thi cache n item cuoi cung mList
+                        if ((totalItems / PAGE_LIMIT) - (last / PAGE_LIMIT) > 1) {
                             countryAdapter.doCacheLast()
                         }
                         countryAdapter.insertAbove()
                     }
-                    println("Adapter size: ${countryAdapter.mList.size}")
+                    println("Adapter size: ${countryAdapter.mList.size} first: $first last: $last")
+                    countryAdapter.isLoading = false
                 }
             }
         })
@@ -77,10 +90,11 @@ class MainActivity : AppCompatActivity() {
                     JSONObject(String(bytes)).getString("data"),
                     object: TypeToken<Map<String, Country>>(){}.type
                 )
-                println(data.size)
-                val pageData = data.values.toList().subList((page - 1) * PAGE_LIMIT, PAGE_LIMIT * page)
+                var i = 0
+                val pageData = data.values.toList().map {
+                    it.apply { region += i++ }
+                }.subList((page - 1) * PAGE_LIMIT, PAGE_LIMIT * page)
                 if (pageData.isNotEmpty()) {
-                    println(pageData)
                     mainHandler.post {
                         page++
                         countryAdapter.setData(pageData)

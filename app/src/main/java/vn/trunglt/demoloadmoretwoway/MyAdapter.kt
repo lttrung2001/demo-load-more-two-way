@@ -12,6 +12,8 @@ class CountryAdapter(private val loadMoreApi: () -> Unit) : RecyclerView.Adapter
     val cacheFirst = Stack<List<Country>>()
     val cacheLast = Stack<List<Country>>()
 
+    var isLoading = false
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CountryViewHolder {
         return CountryViewHolder(
             ItemCountryBinding.inflate(LayoutInflater.from(parent.context))
@@ -46,8 +48,8 @@ class CountryAdapter(private val loadMoreApi: () -> Unit) : RecyclerView.Adapter
                 notifyItemRangeInserted(preSize, data.size)
             }
         }
-        println("insertBelow cacheFirst: $cacheFirst")
-        println("insertBelow cacheLast: $cacheLast")
+        println("${cacheFirst.size} insertBelow cacheFirst: $cacheFirst")
+        println("${cacheLast.size} insertBelow cacheLast: $cacheLast")
     }
 
     fun insertAbove() {
@@ -57,23 +59,22 @@ class CountryAdapter(private val loadMoreApi: () -> Unit) : RecyclerView.Adapter
                 notifyItemRangeInserted(0, it.size)
             }
         }
-        println("insertBelow cacheFirst: $cacheFirst")
-        println("insertBelow cacheLast: $cacheLast")
+        println("${cacheFirst.size} insertBelow cacheFirst: $cacheFirst")
+        println("${cacheLast.size} insertBelow cacheLast: $cacheLast")
     }
 
     fun doCacheLast() {
-        val min = minOf(MainActivity.PAGE_LIMIT, itemCount % MainActivity.PAGE_LIMIT)
-
-        mList.takeLast(min).also {
-            if (it.isNotEmpty())
+        mList.takeLast(MainActivity.PAGE_LIMIT).also {
+            if (it.isNotEmpty()) {
                 cacheLast.push(it)
+            }
         }
 
         val preSize = mList.size
-        for (i in 0 until min) {
+        for (i in 0 until MainActivity.PAGE_LIMIT) {
             mList.removeLast()
+            notifyItemRemoved(mList.size)
         }
-        notifyItemRangeRemoved(preSize, min)
     }
 
     fun doCacheFirst() {
@@ -81,14 +82,14 @@ class CountryAdapter(private val loadMoreApi: () -> Unit) : RecyclerView.Adapter
         cacheFirst.push(mList.take(MainActivity.PAGE_LIMIT))
         for (i in 0 until MainActivity.PAGE_LIMIT) {
             mList.removeFirst()
+            notifyItemRemoved(0)
         }
-        notifyItemRangeRemoved(preSize, MainActivity.PAGE_LIMIT)
     }
 
     inner class CountryViewHolder(val binding: ItemCountryBinding) : ViewHolder(binding.root) {
         fun bind(position: Int) {
             binding.tvCountryItmName.text = mList[position].country
-            binding.tvCountryItmRegion.text = mList[position].region + " $position"
+            binding.tvCountryItmRegion.text = mList[position].region
         }
     }
 }
