@@ -10,6 +10,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import org.json.JSONObject
 import vn.trunglt.demoloadmoretwoway.databinding.ActivityMainBinding
+import vn.trunglt.demoloadmoretwoway.utils.NetworkManager
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -28,10 +29,6 @@ class MainActivity : AppCompatActivity() {
     // Bien nay tuong trung cho dialog loading
     private var isLoading = false
 
-    private val mainHandler by lazy {
-        Handler(Looper.getMainLooper())
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -46,31 +43,28 @@ class MainActivity : AppCompatActivity() {
                 val childCount = llm.childCount
                 val first = llm.findFirstCompletelyVisibleItemPosition()
                 val last = llm.findLastCompletelyVisibleItemPosition()
-                if (!countryAdapter.isLoading && !isLoading) {
-                    countryAdapter.isLoading = true
-                    if (
-                        // dy > 0 scroll xuong
-                        dy > 0 &&
-                        // check co can load san trang sau khong
-                        last + childCount > totalItems) {
-                        // neu index cua trang hien tai > 1 thi cache n item dau tien mList
-                        if (first / PAGE_LIMIT > 1) {
+                val canScrollDown = dy > 0
+                val canScrollUp = dy < 0
+                if (!isLoading) {
+                    isLoading = true
+                    println("Adapter size: ${countryAdapter.mList.size} first: $first last: $last")
+                    if (canScrollDown && last + childCount > totalItems) {
+                        val pageDistanceTop = first / PAGE_LIMIT
+                        if (pageDistanceTop > 1) {
                             countryAdapter.doCacheFirst()
                         }
-                        countryAdapter.insertBelow()
-                    } else if (
-                        // dy < 0 scroll len
-                        dy < 0 &&
-                        // check co can load san trang truoc khong
-                        first - childCount < 0) {
-                        // neu delta cua trang hien tai voi tong so trang > 1 thi cache n item cuoi cung mList
-                        if ((totalItems / PAGE_LIMIT) - (last / PAGE_LIMIT) > 1) {
+                        countryAdapter.insertBelow {
+                            isLoading = false
+                        }
+                    } else if (canScrollUp && first - childCount < 0) {
+                        val pageDistanceBottom = (totalItems / PAGE_LIMIT) - (last / PAGE_LIMIT)
+                        if (pageDistanceBottom > 1) {
                             countryAdapter.doCacheLast()
                         }
-                        countryAdapter.insertAbove()
+                        countryAdapter.insertAbove {
+                            isLoading = false
+                        }
                     }
-                    println("Adapter size: ${countryAdapter.mList.size} first: $first last: $last")
-                    countryAdapter.isLoading = false
                 }
             }
         })
@@ -79,32 +73,25 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun callApi() {
-        Thread {
-            try {
+        NetworkManager.doRequest<Map<String, Country>>(
+            url = "https://api.first.org/data/v1/countries",
+            onPrepare = {
                 isLoading = true
-                val url = URL("https://api.first.org/data/v1/countries")
-                val urlConnection = url.openConnection() as HttpURLConnection
-                val bytes = urlConnection.inputStream.readBytes()
-                urlConnection.disconnect()
-                val data = Gson().fromJson<Map<String, Country>>(
-                    JSONObject(String(bytes)).getString("data"),
-                    object: TypeToken<Map<String, Country>>(){}.type
-                )
+            },
+            onSuccess = { data ->
+                isLoading = false
                 var i = 0
                 val pageData = data.values.toList().map {
                     it.apply { region += i++ }
                 }.subList((page - 1) * PAGE_LIMIT, PAGE_LIMIT * page)
                 if (pageData.isNotEmpty()) {
-                    mainHandler.post {
-                        page++
-                        countryAdapter.setData(pageData)
-                    }
+                    page++
+                    countryAdapter.setData(pageData)
                 }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            } finally {
+            },
+            onError = {
                 isLoading = false
             }
-        }.start()
+        )
     }
 }

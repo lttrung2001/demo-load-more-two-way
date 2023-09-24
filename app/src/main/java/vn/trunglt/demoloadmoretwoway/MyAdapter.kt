@@ -12,11 +12,9 @@ class CountryAdapter(private val loadMoreApi: () -> Unit) : RecyclerView.Adapter
     val cacheFirst = Stack<List<Country>>()
     val cacheLast = Stack<List<Country>>()
 
-    var isLoading = false
-
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CountryViewHolder {
         return CountryViewHolder(
-            ItemCountryBinding.inflate(LayoutInflater.from(parent.context))
+            ItemCountryBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         )
     }
 
@@ -33,7 +31,7 @@ class CountryAdapter(private val loadMoreApi: () -> Unit) : RecyclerView.Adapter
         mList.addAll(data)
         notifyItemRangeInserted(preSize, data.size)
     }
-    fun insertBelow(data: List<Country>? = null) {
+    fun insertBelow(data: List<Country>? = null, callback: () -> Unit) {
         val preSize = mList.size
         if (cacheLast.isNotEmpty()) {
             cacheLast.pop().also {
@@ -50,9 +48,10 @@ class CountryAdapter(private val loadMoreApi: () -> Unit) : RecyclerView.Adapter
         }
         println("${cacheFirst.size} insertBelow cacheFirst: $cacheFirst")
         println("${cacheLast.size} insertBelow cacheLast: $cacheLast")
+        callback()
     }
 
-    fun insertAbove() {
+    fun insertAbove(callback: () -> Unit) {
         if (cacheFirst.isNotEmpty()) {
             cacheFirst.pop().also {
                 mList.addAll(0, it)
@@ -61,6 +60,7 @@ class CountryAdapter(private val loadMoreApi: () -> Unit) : RecyclerView.Adapter
         }
         println("${cacheFirst.size} insertBelow cacheFirst: $cacheFirst")
         println("${cacheLast.size} insertBelow cacheLast: $cacheLast")
+        callback()
     }
 
     fun doCacheLast() {
