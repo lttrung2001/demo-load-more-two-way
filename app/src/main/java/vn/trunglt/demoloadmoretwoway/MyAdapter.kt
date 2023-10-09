@@ -4,13 +4,19 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
+import com.squareup.picasso.Picasso
 import vn.trunglt.demoloadmoretwoway.databinding.ItemCountryBinding
+import vn.trunglt.demoloadmoretwoway.models.User
 import java.util.Stack
 
 class CountryAdapter(private val loadMoreApi: () -> Unit) : RecyclerView.Adapter<CountryAdapter.CountryViewHolder>() {
-    val mList = mutableListOf<Country>()
-    val cacheFirst = Stack<List<Country>>()
-    val cacheLast = Stack<List<Country>>()
+    val mList = mutableListOf<User>()
+    val cacheFirst = Stack<List<User>>()
+    val cacheLast = Stack<List<User>>()
+
+    override fun onViewAttachedToWindow(holder: CountryViewHolder) {
+        super.onViewAttachedToWindow(holder)
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CountryViewHolder {
         return CountryViewHolder(
@@ -26,12 +32,12 @@ class CountryAdapter(private val loadMoreApi: () -> Unit) : RecyclerView.Adapter
         holder.bind(position)
     }
 
-    fun setData(data: List<Country>) {
+    fun setData(data: List<User>) {
         val preSize = mList.size
         mList.addAll(data)
         notifyItemRangeInserted(preSize, data.size)
     }
-    fun insertBelow(data: List<Country>? = null, callback: () -> Unit) {
+    fun insertBelow(data: List<User>? = null, callback: () -> Unit) {
         val preSize = mList.size
         if (cacheLast.isNotEmpty()) {
             cacheLast.pop().also {
@@ -88,8 +94,9 @@ class CountryAdapter(private val loadMoreApi: () -> Unit) : RecyclerView.Adapter
 
     inner class CountryViewHolder(val binding: ItemCountryBinding) : ViewHolder(binding.root) {
         fun bind(position: Int) {
-            binding.tvCountryItmName.text = mList[position].country
-            binding.tvCountryItmRegion.text = mList[position].region
+            binding.tvCountryItmName.text = mList[position].nodeId
+            binding.tvCountryItmRegion.text = mList[position].nodeId
+            Picasso.get().load(mList[position].owner.avatarUrl).into(binding.ivCountry)
         }
     }
 }

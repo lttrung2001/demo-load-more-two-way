@@ -10,6 +10,8 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import org.json.JSONObject
 import vn.trunglt.demoloadmoretwoway.databinding.ActivityMainBinding
+import vn.trunglt.demoloadmoretwoway.models.User
+import vn.trunglt.demoloadmoretwoway.responses.GetListUserResponse
 import vn.trunglt.demoloadmoretwoway.utils.NetworkManager
 import java.net.HttpURLConnection
 import java.net.URL
@@ -68,28 +70,24 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         })
+        binding.root.setOnClickListener {
+            callApi()
+        }
 
-        callApi()
     }
 
     private fun callApi() {
-        NetworkManager.doRequest<Map<String, Country>>(
-            url = "https://api.first.org/data/v1/countries",
+        NetworkManager.doRequest(
+            url = "https://api.github.com/users/geerlingguy/repos?per_page=10&page=${page++}",
             onPrepare = {
                 isLoading = true
             },
             onSuccess = { data ->
+                countryAdapter.setData(data)
                 isLoading = false
-                var i = 0
-                val pageData = data.values.toList().map {
-                    it.apply { region += i++ }
-                }.subList((page - 1) * PAGE_LIMIT, PAGE_LIMIT * page)
-                if (pageData.isNotEmpty()) {
-                    page++
-                    countryAdapter.setData(pageData)
-                }
             },
             onError = {
+                it.printStackTrace()
                 isLoading = false
             }
         )
