@@ -7,6 +7,7 @@ import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.squareup.picasso.Picasso
 import vn.trunglt.demoloadmoretwoway.databinding.ItemCountryBinding
 import vn.trunglt.demoloadmoretwoway.models.User
+import vn.trunglt.demoloadmoretwoway.utils.AppCacher
 import java.util.Stack
 
 class CountryAdapter(private val loadMoreApi: () -> Unit) : RecyclerView.Adapter<CountryAdapter.CountryViewHolder>() {
@@ -96,7 +97,11 @@ class CountryAdapter(private val loadMoreApi: () -> Unit) : RecyclerView.Adapter
         fun bind(position: Int) {
             binding.tvCountryItmName.text = mList[position].nodeId
             binding.tvCountryItmRegion.text = mList[position].nodeId
-            Picasso.get().load(mList[position].owner.avatarUrl).into(binding.ivCountry)
+            AppCacher.load(
+                url = mList[position].owner.avatarUrl,
+                imageView = binding.ivCountry
+            )
+//            Picasso.get().load(mList[position].owner.avatarUrl).into(binding.ivCountry)
         }
     }
 }
