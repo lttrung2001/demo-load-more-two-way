@@ -8,10 +8,13 @@ import android.os.Handler
 import android.os.Looper
 import android.util.LruCache
 import android.widget.ImageView
+import okhttp3.internal.cache.DiskLruCache
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.math.BigInteger
 import java.net.HttpURLConnection
 import java.net.URL
+import java.security.MessageDigest
 
 
 @SuppressLint("StaticFieldLeak")
@@ -36,7 +39,7 @@ object AppCacher {
         // Put to disk cache
         if (key != null && oldValue != null) {
             try {
-                File(mContext?.cacheDir, key.getBeautyUrl()).writeBytes(oldValue.getBytes())
+                File(mContext?.cacheDir, key.md5()).writeBytes(oldValue.getBytes())
             } catch (e: Exception) {
                 println(e.message)
                 e.printStackTrace()
@@ -54,7 +57,7 @@ object AppCacher {
                         println("GET FROM MEMORY CACHE")
                     }
                 } ?: kotlin.run {
-                    val file = File(mContext?.cacheDir, url.getBeautyUrl())
+                    val file = File(mContext?.cacheDir, url.md5())
                     if (file.exists()) {
 //                        println("lastModified: ${file.lastModified()} current: ${System.currentTimeMillis()}")
                         if (file.lastModified() + DELTA_TIME < System.currentTimeMillis()) {
@@ -100,7 +103,8 @@ object AppCacher {
         return BitmapFactory.decodeByteArray(this, 0, size)
     }
 
-    private fun String.getBeautyUrl(): String {
-        return replace(":", "").replace("/", "")
+    private fun String.md5(): String {
+        val md = MessageDigest.getInstance("MD5")
+        return BigInteger(1, md.digest(toByteArray())).toString(16).padStart(32, '0')
     }
 }
