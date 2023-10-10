@@ -6,6 +6,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import org.json.JSONObject
 import vn.trunglt.demoloadmoretwoway.models.User
+import vn.trunglt.demoloadmoretwoway.responses.GetListUserResponse
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -15,7 +16,7 @@ object NetworkManager {
     fun doRequest(
         url: String,
         onPrepare: () -> Unit,
-        onSuccess: (List<User>) -> Unit,
+        onSuccess: (GetListUserResponse) -> Unit,
         onError: (e: Exception) -> Unit
     ) {
         onPrepare()
@@ -24,8 +25,7 @@ object NetworkManager {
                 val urlConnection = URL(url).openConnection() as HttpURLConnection
                 val bytes = urlConnection.inputStream.readBytes()
                 urlConnection.disconnect()
-                val typeToken = object : TypeToken<List<User>>() {}.type
-                val dataConverted = Gson().fromJson<List<User>>(String(bytes), typeToken)
+                val dataConverted = Gson().fromJson(String(bytes), GetListUserResponse::class.java)
                 mainHandler.post {
                     onSuccess(dataConverted)
                 }

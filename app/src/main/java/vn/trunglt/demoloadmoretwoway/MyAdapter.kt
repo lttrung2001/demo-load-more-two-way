@@ -8,6 +8,7 @@ import com.squareup.picasso.Picasso
 import vn.trunglt.demoloadmoretwoway.databinding.ItemCountryBinding
 import vn.trunglt.demoloadmoretwoway.models.User
 import vn.trunglt.demoloadmoretwoway.utils.AppCacher
+import vn.trunglt.demoloadmoretwoway.utils.AppCacher.load
 import java.util.Stack
 
 class CountryAdapter(private val loadMoreApi: () -> Unit) : RecyclerView.Adapter<CountryAdapter.CountryViewHolder>() {
@@ -95,13 +96,11 @@ class CountryAdapter(private val loadMoreApi: () -> Unit) : RecyclerView.Adapter
 
     inner class CountryViewHolder(val binding: ItemCountryBinding) : ViewHolder(binding.root) {
         fun bind(position: Int) {
-            binding.tvCountryItmName.text = mList[position].nodeId
-            binding.tvCountryItmRegion.text = mList[position].nodeId
-            AppCacher.load(
-                url = mList[position].owner.avatarUrl,
-                imageView = binding.ivCountry
-            )
-//            Picasso.get().load(mList[position].owner.avatarUrl).into(binding.ivCountry)
+            binding.apply {
+                tvCountryItmName.text = mList[position].nodeId
+                tvCountryItmRegion.text = mList[position].nodeId
+                ivCountry.load(mList[position].avatarUrl)
+            }
         }
     }
 }

@@ -78,12 +78,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun callApi() {
         NetworkManager.doRequest(
-            url = "https://api.github.com/users/geerlingguy/repos?per_page=10&page=${page++}",
+            url = "https://api.github.com/search/users?q=a&page=1&per_page=100",
             onPrepare = {
                 isLoading = true
             },
             onSuccess = { data ->
-                countryAdapter.setData(data)
+                countryAdapter.setData(data.items )
                 isLoading = false
             },
             onError = {
