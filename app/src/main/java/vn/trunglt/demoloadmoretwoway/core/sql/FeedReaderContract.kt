@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteOpenHelper
 import android.provider.BaseColumns
 import androidx.core.database.getStringOrNull
 
+
 abstract class SqlDbHelper(
     context: Context,
     databaseName: String,
@@ -34,9 +35,14 @@ abstract class SqlDbHelper(
 }
 
 class StudentModel(
+    val id: String?,
     val name: String?,
     val age: String?,
     val sex: String?
+)
+
+data class PersonModel(
+    val students: List<StudentModel>
 )
 
 class StudentDbHelper(context: Context) : SqlDbHelper(
@@ -92,6 +98,7 @@ class StudentDbHelper(context: Context) : SqlDbHelper(
                 it.getStringOrNull(0),
                 it.getStringOrNull(1),
                 it.getStringOrNull(2),
+                it.getStringOrNull(3),
             )
             it.close()
             data
@@ -112,6 +119,7 @@ class StudentDbHelper(context: Context) : SqlDbHelper(
                     cursor.getStringOrNull(0),
                     cursor.getStringOrNull(1),
                     cursor.getStringOrNull(2),
+                    cursor.getStringOrNull(3),
                 )
                 studentList.add(student)
                 cursor.moveToNext()
@@ -119,5 +127,59 @@ class StudentDbHelper(context: Context) : SqlDbHelper(
         }
         cursor.close()
         return studentList
+    }
+
+    fun updateStudent(student: StudentModel) {
+        val db = this.writableDatabase
+        val values = ContentValues()
+        values.put(STUDENT_TABLE.COLUMN_FULL_NAME, student.name)
+        values.put(STUDENT_TABLE.COLUMN_AGE, student.age)
+        values.put(STUDENT_TABLE.COLUMN_AGE, student.sex)
+        db.update(
+            STUDENT_TABLE.TABLE_NAME,
+            values,
+            BaseColumns._ID + " = ?",
+            arrayOf<String>(java.lang.String.valueOf(student.id))
+        )
+        db.close()
+    }
+
+    fun deleteStudent(studentId: Int) {
+        val db = this.writableDatabase
+        db.delete(
+            STUDENT_TABLE.TABLE_NAME,
+            BaseColumns._ID + " = ?",
+            arrayOf(studentId.toString())
+        )
+        db.close()
+    }
+
+    fun getItemsByPage(pageNumber: Int, itemsPerPage: Int): List<StudentModel> {
+        val items = mutableListOf<StudentModel>()
+        val db = this.readableDatabase
+        val offset = (pageNumber - 1) * itemsPerPage
+        val cursor = db.rawQuery(
+            "SELECT * FROM " + STUDENT_TABLE.TABLE_NAME + " LIMIT ? OFFSET ?",
+            arrayOf(itemsPerPage.toString(), offset.toString())
+        )
+        if (cursor.moveToFirst()) {
+            do {
+                val id = cursor.getString(cursor.getColumnIndexOrThrow(BaseColumns._ID))
+                val name =
+                    cursor.getString(cursor.getColumnIndexOrThrow(STUDENT_TABLE.COLUMN_FULL_NAME))
+                val age = cursor.getString(cursor.getColumnIndexOrThrow(STUDENT_TABLE.COLUMN_AGE))
+                val sex = cursor.getString(cursor.getColumnIndexOrThrow(STUDENT_TABLE.COLUMN_SEX))
+                items.add(
+                    StudentModel(
+                        id = id,
+                        name = name,
+                        age = age,
+                        sex = sex
+                    )
+                )
+            } while (cursor.moveToNext())
+        }
+        cursor.close()
+        return items
     }
 }

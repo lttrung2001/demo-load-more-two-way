@@ -13,6 +13,12 @@ import com.google.gson.reflect.TypeToken
 import org.json.JSONObject
 import vn.trunglt.demoloadmoretwoway.core.ApiResult
 import vn.trunglt.demoloadmoretwoway.core.HttpUtils
+import vn.trunglt.demoloadmoretwoway.core.file_json.fromFile
+import vn.trunglt.demoloadmoretwoway.core.file_json.toFileExternal
+import vn.trunglt.demoloadmoretwoway.core.file_json.toJson
+import vn.trunglt.demoloadmoretwoway.core.sql.PersonModel
+import vn.trunglt.demoloadmoretwoway.core.sql.StudentDbHelper
+import vn.trunglt.demoloadmoretwoway.core.sql.StudentModel
 import vn.trunglt.demoloadmoretwoway.databinding.ActivityMainBinding
 import java.net.HttpURLConnection
 import java.net.URL
@@ -37,10 +43,53 @@ class MainActivity : AppCompatActivity() {
         Handler(Looper.getMainLooper())
     }
 
+    private val studentDbHelper by lazy {
+        StudentDbHelper(this)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+
+        var data = mutableListOf<StudentModel>()
+        for (index in 0..100) {
+            data.add(
+                StudentModel(
+                    id = index.toString(),
+                    name = "Nguyen Van $index",
+                    age = (10 + index).toString(),
+                    sex = if (index % 2 == 0) "Nam" else "Nu"
+                )
+            )
+
+            studentDbHelper.insertStudent(
+                data = StudentModel(
+                    id = index.toString(),
+                    name = "Nguyen Van $index",
+                    age = (10 + index).toString(),
+                    sex = if (index % 2 == 0) "Nam" else "Nu"
+                )
+            )
+        }
+
+
+        val personModel = PersonModel(data)
+
+        personModel.toFileExternal("person.json",this)
+
+        var page = 1
+        binding.btnGetItemByPage.setOnClickListener {
+            val person = PersonModel::class.java.fromFile("person.json",this)
+            println("AAAA ${person?.toJson()}")
+//            val data = studentDbHelper.getItemsByPage(page, 10)
+//            println("AAAA ${Gson().toJson(data)}")
+//            page++
+        }
+    }
+
+    private fun setupDataCountry() {
         binding.rvCountry.adapter = countryAdapter
         binding.rvCountry.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
