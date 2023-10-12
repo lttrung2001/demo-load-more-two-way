@@ -5,6 +5,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.io.File
 import java.io.FileWriter
+import java.io.InputStreamReader
 
 
 val gson: Gson by lazy {
@@ -42,4 +43,19 @@ inline fun <reified T> Class<T>.fromFile(fileName: String, context: Context): T?
     fileReader.close()
     file.delete()
     return jsonString.fromJson()
+}
+
+
+inline fun <reified T> readDataFromAsset(fileName: String,context: Context): T? {
+    val gson = Gson()
+    var myData: T? = null
+    try {
+        val inputStream = context.assets.open(fileName)
+        val reader = InputStreamReader(inputStream)
+        myData = gson.fromJson(reader, T::class.java)
+        reader.close()
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+    return myData
 }

@@ -14,6 +14,7 @@ import org.json.JSONObject
 import vn.trunglt.demoloadmoretwoway.core.ApiResult
 import vn.trunglt.demoloadmoretwoway.core.HttpUtils
 import vn.trunglt.demoloadmoretwoway.core.file_json.fromFile
+import vn.trunglt.demoloadmoretwoway.core.file_json.readDataFromAsset
 import vn.trunglt.demoloadmoretwoway.core.file_json.toFileExternal
 import vn.trunglt.demoloadmoretwoway.core.file_json.toJson
 import vn.trunglt.demoloadmoretwoway.core.sql.PersonModel
@@ -77,12 +78,14 @@ class MainActivity : AppCompatActivity() {
 
         val personModel = PersonModel(data)
 
-        personModel.toFileExternal("person.json",this)
+        personModel.toFileExternal("person.json", this)
 
         var page = 1
         binding.btnGetItemByPage.setOnClickListener {
-            val person = PersonModel::class.java.fromFile("person.json",this)
-            println("AAAA ${person?.toJson()}")
+            val assets = readDataFromAsset<PersonModel>("person.json", this)
+            println("AAA ${assets?.toJson()}")
+//            val person = PersonModel::class.java.fromFile("person.json",this)
+//            println("AAAA ${person?.toJson()}")
 //            val data = studentDbHelper.getItemsByPage(page, 10)
 //            println("AAAA ${Gson().toJson(data)}")
 //            page++
